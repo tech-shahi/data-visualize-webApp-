@@ -5,8 +5,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import sqlite3
 
+# Print current directory for debugging
+print("Current directory:", os.getcwd())
+
 # Connect to SQLite database
-conn = sqlite3.connect('feedback.db')
+db_file_path = 'feedback.db'  # Adjust the file path if necessary
+print("Database file path:", db_file_path)
+conn = sqlite3.connect(db_file_path)
 c = conn.cursor()
 
 # Create feedback table if not exists
