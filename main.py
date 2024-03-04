@@ -3,6 +3,18 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sqlite3
+
+# Establish connection to SQLite database
+conn = sqlite3.connect('feedback.db')
+c = conn.cursor()
+
+# Create table if not exists
+c.execute('''CREATE TABLE IF NOT EXISTS feedback (
+                Name TEXT,
+                Email TEXT,
+                Message TEXT
+            )''')
 
 # Custom CSS for styling
 st.markdown(
@@ -54,15 +66,10 @@ def load_data(file):
     df = pd.read_csv(file_path)
     return df
 
-# Function to save feedback data to CSV file
-def save_feedback_to_csv(name, email, message):
-    feedback_data = {
-        'Name': [name],
-        'Email': [email],
-        'Message': [message]
-    }
-    feedback_df = pd.DataFrame(feedback_data)
-    feedback_df.to_csv('feedback.csv', mode='a', header=not os.path.exists('feedback.csv'), index=False)
+# Function to save feedback data to SQLite database
+def save_feedback_to_db(name, email, message):
+    c.execute("INSERT INTO feedback (Name, Email, Message) VALUES (?, ?, ?)", (name, email, message))
+    conn.commit()
 
 # Custom sidebar
 st.sidebar.title('Menu')
@@ -144,7 +151,7 @@ elif selected_menu == '✉️ Contact Us':
     message = st.text_area('Message')
     if st.button('Submit'):
         # Process the form submission
-        save_feedback_to_csv(name, email, message)
+        save_feedback_to_db(name, email, message)
         st.success('Thank you for your message! We will get back to you shortly.')
 
 # Footer
@@ -156,3 +163,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
+
+# Close the SQLite database connection
+conn.close()
