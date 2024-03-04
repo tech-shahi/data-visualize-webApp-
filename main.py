@@ -3,66 +3,28 @@ import pandas as pd
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+import sqlite3
 
-# Custom CSS for styling
-st.markdown(
-    """
-    <style>
-    body {
-        background-color: #f5f5f5;
-        font-family: Arial, sans-serif;
-    }
-    .sidebar .sidebar-content {
-        background-color: #4CAF50;
-    }
-    .sidebar .sidebar-content .block-container {
-        color: white;
-    }
-    .sidebar .sidebar-content .block-container a {
-        color: white;
-    }
-    .sidebar .sidebar-content .block-container a:hover {
-        color: #f0f0f0;
-    }
-    .main .block-container {
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-    }
-    .footer {
-        padding: 20px;
-        text-align: center;
-        color: #808080;
-        background-color: #f0f0f0;
-        border-top: 1px solid #ddd;
-        margin-top: 20px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Connect to SQLite database
+conn = sqlite3.connect('feedback.db')
+c = conn.cursor()
+
+# Create feedback table if not exists
+c.execute('''CREATE TABLE IF NOT EXISTS feedback
+             (Name TEXT, Email TEXT, Message TEXT)''')
+conn.commit()
+
+# Function to save feedback data to SQLite database
+def save_feedback_to_database(name, email, message):
+    c.execute("INSERT INTO feedback (Name, Email, Message) VALUES (?, ?, ?)", (name, email, message))
+    conn.commit()
+
+# Function to retrieve feedback data from SQLite database
+def get_feedback_data():
+    c.execute("SELECT * FROM feedback")
+    return c.fetchall()
 
 working_dir = os.path.dirname(os.path.abspath(__file__))
-
-# Specify the folder where your CSV files are located
-folder_path = f"{working_dir}/data"  # Update this to your folder path
-
-# Function to load CSV data
-@st.cache(allow_output_mutation=True)
-def load_data(file):
-    file_path = os.path.join(folder_path, file.name)
-    df = pd.read_csv(file_path)
-    return df
-
-# Function to save feedback data to CSV file
-def save_feedback_to_csv(name, email, message):
-    feedback_data = {
-        'Name': [name],
-        'Email': [email],
-        'Message': [message]
-    }
-    feedback_df = pd.DataFrame(feedback_data)
-    feedback_df.to_csv('feedback.csv', mode='a', header=not os.path.exists('feedback.csv'), index=False)
 
 # Custom sidebar
 st.sidebar.title('Menu')
@@ -80,7 +42,7 @@ if selected_menu == '📊 Data Visualizer':
 
     if uploaded_file is not None:
         # Load the CSV data
-        df = load_data(uploaded_file)
+        df = pd.read_csv(uploaded_file)
 
         col1, col2 = st.columns(2)
 
@@ -144,15 +106,5 @@ elif selected_menu == '✉️ Contact Us':
     message = st.text_area('Message')
     if st.button('Submit'):
         # Process the form submission
-        save_feedback_to_csv(name, email, message)
+        save_feedback_to_database(name, email, message)
         st.success('Thank you for your message! We will get back to you shortly.')
-
-# Footer
-st.markdown(
-    """
-    <div class="footer">
-        © Copyrights - CreativeShahi 2024
-    </div>
-    """,
-    unsafe_allow_html=True
-)
