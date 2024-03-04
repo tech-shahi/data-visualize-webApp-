@@ -1,20 +1,27 @@
 import sqlite3
+from contextlib import closing
 
-# Connect to SQLite database
-conn = sqlite3.connect('feedback.db')
-c = conn.cursor()
+# Define database file path
+DB_FILE = 'feedback.db'
 
-# Create feedback table if not exists
-c.execute('''CREATE TABLE IF NOT EXISTS feedback
-             (Name TEXT, Email TEXT, Message TEXT)''')
-conn.commit()
+def create_feedback_table():
+    with sqlite3.connect(DB_FILE) as conn:
+        with closing(conn.cursor()) as c:
+            # Create feedback table if not exists
+            c.execute('''CREATE TABLE IF NOT EXISTS feedback
+                         (Name TEXT, Email TEXT, Message TEXT)''')
 
 def save_feedback_to_database(name, email, message):
-    # Insert feedback data into the database
-    c.execute("INSERT INTO feedback (Name, Email, Message) VALUES (?, ?, ?)", (name, email, message))
-    conn.commit()
+    with sqlite3.connect(DB_FILE) as conn:
+        with closing(conn.cursor()) as c:
+            # Insert feedback data into the database
+            c.execute("INSERT INTO feedback (Name, Email, Message) VALUES (?, ?, ?)", (name, email, message))
 
-# Function to retrieve feedback data from the database
 def get_feedback_data():
-    c.execute("SELECT * FROM feedback")
-    return c.fetchall()
+    with sqlite3.connect(DB_FILE) as conn:
+        with closing(conn.cursor()) as c:
+            c.execute("SELECT * FROM feedback")
+            return c.fetchall()
+
+# Create the feedback table if not already exists
+create_feedback_table()
